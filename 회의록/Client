@@ -3,3 +3,11 @@ int confTime // 회의 시간
 int personalRole // 개인 역할 Role 
 int mafiaChat // 마피아챗 가능 여부 Bool 형식
 int checkAlive  // 생존 여부 Bool 형식
+
+typedef struct messageInfo {
+	char message[BUF_SIZE]// 전송및 받는 메세지
+	char messagePlayer[BUF_SIZE]// 전송 받은 메세지의 발송자
+};
+char vote[BUF_SIZE] // 투표 인원  - 다른방식으로는 유저들 마다 index를 달아놓고 int로 해서 투표
+
+클라이언트에서 처리할게 아닌 클라이언트에서는 개인 데이터 저장및 메세지 작성, 의견(투표) 제시, 능력사용을 서버로 전달만 하고 서버에서 모든 처리를 해야 될 것 같습니다.
