@@ -1,0 +1,5 @@
+역할 부분 - enum Role {Null,Mafia, Citizen}
+int confTime // 회의 시간 
+int personalRole // 개인 역할 Role 
+int mafiaChat // 마피아챗 가능 여부 Bool 형식
+int checkAlive  // 생존 여부 Bool 형식
