@@ -89,7 +89,9 @@ int isGameEnd() {
 	if (mafiaCnt == 0 || mafiaCnt >= citizenCnt) {
 		return TRUE;
 	}
-	else FALSE;
+	else {
+		return FALSE;
+	}
 }
 
 int main() {
