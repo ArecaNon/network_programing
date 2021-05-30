@@ -232,6 +232,8 @@ unsigned WINAPI RecvMsg(void * arg) {   // read thread main
 			//자기 메세지는 스킵
 			/*if (Idx == personalIdx)
 				continue;*/
+
+			if(!gameStart)
 				//마피아챗일 경우 마피아 체크
 			if (!checkMorning && mafia) {
 				anotherMafiaIdx = Idx;
@@ -287,7 +289,7 @@ unsigned WINAPI RecvMsg(void * arg) {   // read thread main
 			}
 			else {
 				strcpy(user, "[system]");
-				sprintf(mMsg, "아무도 죽지 않았습니다.");
+				strcpy(mMsg, "아무도 죽지 않았습니다.");
 				setMessage(mMsg, user);
 				//printf("\n\n 아무도 죽지 않았습니다. \n\n"); 
 			}
@@ -299,6 +301,12 @@ unsigned WINAPI RecvMsg(void * arg) {   // read thread main
 			continue;
 		case 'G':
 			gameEnd = TRUE;
+			break;
+		case 'H':
+			Idx = recvMsg[2];
+			strcpy(user, "[system]");
+			sprintf(mMsg, "Player %d(이/가) 접속했습니다.", Idx);
+			setMessage(mMsg, user);
 			break;
 		default:
 			continue;
@@ -372,7 +380,7 @@ void GameChatClear() {
 	printf("└───────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
 	gotoxy(9, 22);
 }
-
+/*
 int manufactureRecvMsg(char *recvMsg)
 {
 	char Msg[BUF_SIZE];
@@ -403,9 +411,6 @@ int manufactureRecvMsg(char *recvMsg)
 		break;
 	case 'B':
 		Idx = recvMsg[2];
-		//자기 메세지는 스킵
-		/*if (Idx == personalIdx)
-			continue;*/
 			//마피아챗일 경우 마피아 체크
 		if (!checkMorning && mafia) {
 			anotherMafiaIdx = Idx;
@@ -548,7 +553,7 @@ char* manufactureSendMsg(char *sendMsg, char* result)
 		}
 	}
 	sprintf(Msg, "%c%c%c%s", trigger, (char)strlen(msg), (char)personalIdx, msg);
-}
+}*/
 void ErrorHandling(char *msg) {
 	fputs(msg, stderr);
 	fputc('\n', stderr);
