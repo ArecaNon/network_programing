@@ -124,7 +124,7 @@ int main() {
 	bind(hServSock, (SOCKADDR*)&servAdr, sizeof(servAdr));
 	listen(hServSock, 5);
 
-	for (i = 0; i < 3; i++) {
+	for (i = 0; i < 6; i++) {
 		SOCKET hClntSock;
 		SOCKADDR_IN clntAdr;
 		char message[BUF_SIZE];
