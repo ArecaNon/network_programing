@@ -185,7 +185,7 @@ int main() {
 		}
 	}
 
-	while (clntCnt < 1);
+	while (clntCnt > 0);
 
 	return 0;
 }
