@@ -173,8 +173,9 @@ unsigned WINAPI SendMsg(void * arg) {   // send thread main
 				//printf("\n\n 올바르지 않은 번호입니다. \n\n");
 				continue;
 			}
-			strcmp(msg, cutMsg);
-			sprintf(Msg, "%c%c%s", trigger, (char)strlen(msg), msg);
+			//strcmp(msg, cutMsg);
+			sprintf(Msg, "%c%c%c", trigger, (char)strlen(idx), (char)idx); // 트리거 , 길이 , 투표대상자or마피아능력대상자 번호
+			send(hSock, Msg, strlen(Msg), 0);
 			continue;
 		}
 
@@ -283,7 +284,7 @@ unsigned WINAPI RecvMsg(void * arg) {   // read thread main
 			if (Idx != -1) {
 				deathIdx[Idx] = TRUE;
 				strcpy(user, "[system]");
-				sprintf(mMsg, "Player %c(이/가) 죽었습니다.", (char)Idx);
+				sprintf(mMsg, "Player %d(이/가) 죽었습니다.", Idx);
 				setMessage(mMsg, user);
 				if (Idx == personalIdx) { checkAlive = FALSE; }
 			}
