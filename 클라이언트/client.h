@@ -22,7 +22,7 @@ char msg[MSG_SIZE]; // 전송및 받는 메세지
 int currtime, confTime, voteTime, personalRole, personalIdx, anotherMafiaIdx;// Int
 int mafia, mafiaCanUseAbility, checkMafiaAbilityUse, checkConfTime, checkVoteTime, checkAlive, checkMorning, gameStart, gameEnd; // Bool
 int deathIdx[MAX_USER];
-CRITICAL_SECTION ChatCS;
+CRITICAL_SECTION ChatCS1, ChatCS2;
 
 void ErrorHandling(char *msg);
 unsigned WINAPI SendMsg(void * arg);

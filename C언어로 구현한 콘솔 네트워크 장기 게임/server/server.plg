@@ -1,0 +1,66 @@
+<html>
+<body>
+<pre>
+<h1>Build Log</h1>
+<h3>
+--------------------Configuration: server - Win32 Debug--------------------
+</h3>
+<h3>Command Lines</h3>
+Creating temporary file "C:\DOCUME~1\Kts\LOCALS~1\Temp\RSPA3.tmp" with contents
+[
+/nologo /MT /W3 /Gm /GX /ZI /Od /D "WIN32" /D "_DEBUG" /D "_CONSOLE" /D "_MBCS" /Fp"Debug/server.pch" /YX /Fo"Debug/" /Fd"Debug/" /FD /GZ /c 
+"C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c"
+]
+Creating command line "cl.exe @C:\DOCUME~1\Kts\LOCALS~1\Temp\RSPA3.tmp" 
+Creating temporary file "C:\DOCUME~1\Kts\LOCALS~1\Temp\RSPA4.tmp" with contents
+[
+kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib wsock32.lib /nologo /subsystem:console /incremental:yes /pdb:"Debug/server.pdb" /debug /machine:I386 /out:"Debug/server.exe" /pdbtype:sept 
+".\Debug\AcceptLogin.obj"
+".\Debug\Chating.obj"
+".\Debug\ErrorHandling.obj"
+".\Debug\HandleReq.obj"
+".\Debug\server.obj"
+]
+Creating command line "link.exe @C:\DOCUME~1\Kts\LOCALS~1\Temp\RSPA4.tmp"
+<h3>Output Window</h3>
+Compiling...
+HandleReq.c
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(44) : warning C4133: 'function' : incompatible types - from 'struct Room *' to 'const char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(56) : warning C4133: 'function' : incompatible types - from 'struct Room *' to 'const char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(62) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(63) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(68) : warning C4133: 'function' : incompatible types - from 'struct Room *' to 'const char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(80) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(81) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(89) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(90) : warning C4047: 'function' : 'char *' differs in levels of indirection from 'char (*)[59]'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(90) : warning C4024: 'recv' : different types for formal and actual parameter 2
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(91) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(92) : warning C4047: 'function' : 'char *' differs in levels of indirection from 'char (*)[6]'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(92) : warning C4024: 'recv' : different types for formal and actual parameter 2
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(131) : warning C4133: 'function' : incompatible types - from 'int *' to 'const char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(132) : warning C4133: 'function' : incompatible types - from 'struct Room *' to 'const char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(136) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(137) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(161) : warning C4133: 'function' : incompatible types - from 'int [5]' to 'const char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(162) : warning C4133: 'function' : incompatible types - from 'struct Login_member [5]' to 'const char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(174) : warning C4133: 'function' : incompatible types - from 'struct Member *' to 'const char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(186) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(187) : warning C4047: 'function' : 'char *' differs in levels of indirection from 'char (*)[13]'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(187) : warning C4024: 'recv' : different types for formal and actual parameter 2
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(188) : warning C4047: 'function' : 'char *' differs in levels of indirection from 'char (*)[41]'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(188) : warning C4024: 'recv' : different types for formal and actual parameter 2
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(224) : warning C4047: 'function' : 'char *' differs in levels of indirection from 'char (*)[12]'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(224) : warning C4024: 'recv' : different types for formal and actual parameter 2
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(225) : warning C4047: 'function' : 'char *' differs in levels of indirection from 'char (*)[12]'
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(225) : warning C4024: 'recv' : different types for formal and actual parameter 2
+C:\Documents and Settings\Kts\πŸ≈¡ »≠∏È\server\HandleReq.c(226) : warning C4133: 'function' : incompatible types - from 'int *' to 'char *'
+Linking...
+
+
+
+<h3>Results</h3>
+server.exe - 0 error(s), 30 warning(s)
+</pre>
+</body>
+</html>

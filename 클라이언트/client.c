@@ -10,8 +10,6 @@
 			F마피아 능력 트리거 - 죽일 사람 전송 | 3바이트 //클라
 			G종료 트리거 - 종료 조건 만족시 전송 | 3바이트*/
 
-
-
 int main(int argc, char *argv[]) {
 	WSADATA wsaData;
 	SOCKET hSock;
@@ -19,12 +17,12 @@ int main(int argc, char *argv[]) {
 	HANDLE hSndThread, hRcvThread, playGameThread;
 	int i;
 
-	for (i = 0; i < MAX_USER; i++) { deathIdx[i] = TRUE; }
+	for (i = 0; i <= MAX_USER; i++) { deathIdx[i] = FALSE; }
 	currtime = 0; // 아침일때 현재 시간
-	confTime = 10; // 회의시간
-	voteTime = 10; // 투표시간
+	confTime = 5; // 회의시간
+	voteTime = 100; // 투표시간
 	anotherMafiaIdx = -1; // 다른 마피아의 idx
-	personalIdx = 1; // 서버에서 부여받은 개인 index 
+	personalIdx = -1; // 서버에서 부여받은 개인 index 
 	personalRole = Null; // 서버에서 받아온 개인 역할
 	mafia = FALSE; // 마피아챗 가능 여부
 	mafiaCanUseAbility = FALSE; // 마피아의 능력 사용 가능 여부
@@ -50,7 +48,8 @@ int main(int argc, char *argv[]) {
 	if (connect(hSock, (SOCKADDR*)&servAdr, sizeof(servAdr)) == SOCKET_ERROR) {
 		ErrorHandling("connect() error");
 	}
-	InitializeCriticalSection(&ChatCS);
+	InitializeCriticalSection(&ChatCS1);
+	InitializeCriticalSection(&ChatCS2);
 
 	hSndThread =
 		(HANDLE)_beginthreadex(NULL, 0, SendMsg, (void*)&hSock, 0, NULL);
@@ -58,9 +57,9 @@ int main(int argc, char *argv[]) {
 		(HANDLE)_beginthreadex(NULL, 0, RecvMsg, (void*)&hSock, 0, NULL);
 	playGameThread =(HANDLE)_beginthreadex(NULL, 0, GameManager, NULL , 0, NULL);
 
-	EnterCriticalSection(&ChatCS);
+	EnterCriticalSection(&ChatCS1);
 	GameChatClear();
-	LeaveCriticalSection(&ChatCS);
+	LeaveCriticalSection(&ChatCS1);
 
 	WaitForSingleObject(hSndThread, INFINITE);
 	WaitForSingleObject(hRcvThread, INFINITE);
@@ -72,41 +71,38 @@ int main(int argc, char *argv[]) {
 unsigned WINAPI GameManager()
 {  
 	time_t t1, t2;
-	char *mMsg = "";
-	char *user = "";
+	int vote, conf;
+	char mMsg[BUF_SIZE] = { 0, };
+	char user[BUF_SIZE] = { 0, };
 	while (1) {
 		if (!gameStart)	{continue;}
-
-		//아침일 경우
-		if (checkMorning) { 
-			if (!checkConfTime && !checkVoteTime) {
-				user = "[system]";
-				mMsg = "회의시간이 시작되었습니다";
-				setMessage(mMsg, user);
-				//printf("\n\n[ 회의시간이 시작되었습니다 ]\n\n");
-				currtime = 0;
-				t1 = time(NULL);
-				checkConfTime = TRUE;
-			}
-			t2 = time(NULL);
-			currtime = t2 - t1;
-			if (currtime >= confTime && !checkVoteTime) {
-				user = "[system]";
-				mMsg = "투표시간이 시작되었습니다";
-				setMessage(mMsg, user);
-				//printf("\n\n[ 투표시간이 시작되었습니다 ]\n\n");
-				checkVoteTime = TRUE;
-				checkConfTime = FALSE;
-			}
-			if (currtime >= confTime+ voteTime) {
-				user = "[system]";
-				mMsg = "투표시간이 종료되었습니다";
-				setMessage(mMsg, user);
-				//printf("\n\n[ 투표시간이 종료되었습니다 ]\n\n");
-				checkMorning = FALSE;
-				checkVoteTime = FALSE;
-			}
+		
+		if (!checkConfTime && !checkVoteTime && checkMorning) {
+			vote = voteTime;
+			conf = confTime;
+			//sprintf(mMsg, "%d %d %d회의시간이 시작되었습니다", (int)currtime, vote, conf);
+			strcpy(mMsg, "회의시간이 시작되었습니다");
+			setMessage(mMsg, "[system]");
+			t1 = time(NULL);
+			checkConfTime = TRUE;
 		}
+		t2 = time(NULL);
+		currtime = t2 - t1;
+		if ((currtime < conf+vote) && (currtime >= conf) && checkConfTime && !checkVoteTime && checkMorning) {
+			//sprintf(mMsg, "%d %d %d투표시간이 시작되었습니다", currtime,checkVoteTime, checkConfTime);
+			strcpy(mMsg, "투표시간이 시작되었습니다");
+			setMessage(mMsg, "[system]");
+			checkVoteTime = TRUE;
+			checkConfTime = FALSE;
+		}
+		if ((currtime >= conf+ vote) && checkMorning && !checkConfTime && checkVoteTime) {
+			//sprintf(mMsg, "%d %d %d투표시간이 종료되었습니다", (int)currtime, checkVoteTime, checkConfTime);
+			strcpy(mMsg, "투표시간이 종료되었습니다");
+			setMessage(mMsg, "[system]");
+			checkMorning = FALSE;
+			checkVoteTime = FALSE;
+		}
+		
 		if (gameEnd) { break; }
 	}
 }
@@ -124,67 +120,57 @@ unsigned WINAPI SendMsg(void * arg) {   // send thread main
 		trigger = 'B';
 		// /투표, /마피아 같은 명령어 구분
 		if (!checkAlive) {
-			strcpy(user, "[system]");
 			strcpy(mMsg, "당신은 죽어서 채팅을 할 수 없습니다.");
-			setMessage(mMsg, user);
-			//printf("\n\n 당신은 죽어서 채팅을 할 수 없습니다. \n\n");
+			setMessage(mMsg, "[system]");
 			continue;
 		}
 
 		if (msg[0] == '/') {
 			cmpMsg = msg;
 			cutMsg = strtok(cmpMsg," ");
-			if (strcmp(cutMsg, "/마피아\n") && strcmp(cutMsg, "/투표\n")) {
-				strcpy(user, "[system]");
+			if (strcmp(cutMsg, "/마피아") && strcmp(cutMsg, "/투표")) {
 				strcpy(mMsg, "틀린 명령어입니다.");
-				setMessage(mMsg, user);
-				//printf("\n\n 틀린 명령어입니다. \n\n");
+				setMessage(mMsg, "[system]");
 				continue;
 			}
 
-			if (!strcmp(cutMsg,"/마피아\n") && !checkMorning && mafiaCanUseAbility) {
+			if (!strcmp(cutMsg,"/마피아") && !checkMorning && mafiaCanUseAbility) {
 				trigger = 'F';
 			}
-			else if(!strcmp(cutMsg, "/마피아\n")){
-				strcpy(user, "[system]");
+			else if(!strcmp(cutMsg, "/마피아")){
 				strcpy(mMsg, "지금은 명령어를 쓸 수 없거나 잘못된 명령어 입니다.");
-				setMessage(mMsg, user);
-				//printf("\n\n 지금은 명령어를 쓸 수 없거나 잘못된 명령어 입니다. \n\n");
+				setMessage(mMsg, "[system]");
 				continue;
 			}
 
-			if (!strcmp(cutMsg, "/투표\n") && checkVoteTime) {
+			if (!strcmp(cutMsg, "/투표") && checkVoteTime) {
 				trigger = 'E';
 			}
-			else if(!strcmp(cutMsg, "/투표\n")){
-				strcpy(user, "[system]");
+			else if(!strcmp(cutMsg, "/투표")){
 				strcpy(mMsg, "지금은 명령어를 쓸 수 없는 시간이거나 잘못된 명령어 입니다.");
-				setMessage(mMsg, user);
-				//printf("\n\n 지금은 명령어를 쓸 수 없는 시간이거나 잘못된 명령어 입니다. \n\n");
+				setMessage(mMsg, "[system]");
 				continue;
 			}
 			// 투표한 Idx확인
 			cutMsg = strtok(NULL, " ");
 			idx = atoi(cutMsg);
-			if (idx < 0 || idx > MAX_USER || deathIdx[idx]) {
-				strcpy(user, "[system]");
+			if (idx < 1 || idx > MAX_USER || deathIdx[idx]) {
 				strcpy(mMsg, "올바르지 않은 번호입니다.");
-				setMessage(mMsg, user);
-				//printf("\n\n 올바르지 않은 번호입니다. \n\n");
+				setMessage(mMsg, "[system]");
 				continue;
 			}
 			//strcmp(msg, cutMsg);
-			sprintf(Msg, "%c%c%c", trigger, (char)strlen(idx), (char)idx); // 트리거 , 길이 , 투표대상자or마피아능력대상자 번호
+			sprintf(Msg, "%c%c%c", trigger,1, (char)idx); // 트리거 , 길이 , 투표대상자or마피아능력대상자 번호
+			strcpy(mMsg, "명령어 사용 완료!");
+			setMessage(mMsg, "[system]");
 			send(hSock, Msg, strlen(Msg), 0);
 			continue;
 		}
 
 		if (trigger == 'B' && !checkMorning) {
 			if (!mafia) {
-				strcpy(user, "[system]");
-				strcpy(mMsg, "올바르지 않은 번호입니다.");
-				setMessage(mMsg, user);
-				//printf("\n\n 밤에는 메세지 전송이 불가능합니다. \n\n");
+				strcpy(mMsg, "밤이라 채팅이 불가능 합니다!");
+				setMessage(mMsg, "[system]");
 				continue;
 			}
 		}
@@ -213,35 +199,52 @@ unsigned WINAPI RecvMsg(void * arg) {   // read thread main
 		switch (trigger)
 		{
 		case 'A':
-			gameStart = TRUE;
-			personalRole = (int)recvMsg[2];
+			Idx = recvMsg[2];
+			if (recvMsg[3] == Mafia1 || recvMsg[3] == Mafia2 && Idx != personalIdx)
+				anotherMafiaIdx = Idx;
+			if (Idx != personalIdx)
+				continue;
+			strcpy(mMsg, "게임이 시작되었습니다.");
+			setMessage(mMsg, "[system]");
+			personalRole = recvMsg[3];
 			if (personalRole == Mafia1) {
 				mafiaCanUseAbility = TRUE;
 				mafia = TRUE;
+				strcpy(mMsg, "당신은 마피아1 입니다 시민들을 모두 죽이세요!");
+				setMessage(mMsg, "[system]");
 			}
-			if (personalRole == Mafia2) {
+			else if (personalRole == Mafia2) {
 				mafiaCanUseAbility = FALSE;
 				mafia = TRUE;
+				strcpy(mMsg, "당신은 마피아2 입니다 마피아1을 도와서 시민들을 모두 죽이세요!");
+				setMessage(mMsg, "[system]");
 			}
-			strcpy(mMsg,"게임이 시작되었습니다.");
-			strcpy(user,"[system]");
-			setMessage(mMsg, user);
-			//printf("\n\n 게임이 시작되었습니다. \n\n");
+			else {
+				strcpy(mMsg, "당신은 시민 입니다 마피아들은 모두 찾아내세요!");
+				setMessage(mMsg, "[system]");
+			}
+
+			gameStart = TRUE;
+			
 			continue;
 		case 'B':
 			Idx = recvMsg[2];
-			//자기 메세지는 스킵
-			/*if (Idx == personalIdx)
-				continue;*/
-
-			if(!gameStart)
 				//마피아챗일 경우 마피아 체크
-			if (!checkMorning && mafia) {
-				anotherMafiaIdx = Idx;
-				sprintf(user, "[ Mafia Player %d ] : ", Idx);
-			}
-			else {
+			if (checkMorning){
 				sprintf(user, "[ Player %d ]", Idx);
+			}
+
+			if (!checkMorning && mafia) {
+				sprintf(user, "[ Mafia Player %d ]", Idx);
+				for (i = 3; i < 3 + strlen; i++) {
+					mMsg[i - 3] = recvMsg[i];
+				}
+				setMessage(mMsg, user);
+				continue;
+			}
+			else if(!checkMorning)
+			{
+				continue;
 			}
 
 			for (i = 3; i < 3 + strlen; i++) {
@@ -249,65 +252,86 @@ unsigned WINAPI RecvMsg(void * arg) {   // read thread main
 			}
 			mMsg[strlen] = 0;
 			setMessage(mMsg, user);
-			//printf("\n");
 			continue;
 		case 'C':
+			EnterCriticalSection(&ChatCS2);
 			Idx = recvMsg[2];
-			confTime = recvMsg[3];
-			voteTime = recvMsg[4];
-			checkMorning = TRUE;
+			//confTime = recvMsg[3];
+			//voteTime = recvMsg[4];
 			if (Idx != -1) {
 				deathIdx[Idx] = TRUE;
-				strcpy(user, "[system]");
-				sprintf(mMsg,"Player %d(이/가) 죽었습니다.",Idx);
-				setMessage(mMsg, user);
-				if (Idx == personalIdx) { checkAlive = FALSE; }
+				if (Idx == personalIdx) { 
+					checkAlive = FALSE;
+					strcpy(mMsg, "당신이 죽었습니다.");
+					setMessage(mMsg, "[system]");
+				}
+				else {
+					sprintf(mMsg, "Player %d(이/가) 죽었습니다.", Idx);
+					setMessage(mMsg, "[system]");
+				}
 			}
 			else {
-				strcpy(user, "[system]");
 				strcpy(mMsg,"아무도 죽지 않았습니다."); 
-				setMessage(mMsg, user);
+				setMessage(mMsg, "[system]");
 			}
+			checkMorning = TRUE;
+			checkConfTime = FALSE;
+			checkVoteTime = FALSE;
 			continue;
+			LeaveCriticalSection(&ChatCS2);
 		case 'D':
-			Idx = recvMsg[2];
+			EnterCriticalSection(&ChatCS2);
 			checkMorning = FALSE;
+			checkVoteTime = FALSE;
+			strcpy(mMsg, "투표시간이 종료되었습니다");
+			setMessage(mMsg, "[system]");
+			Idx = recvMsg[2];
 			//다른 마피아가 죽었을시 
 			if (mafia && Idx == anotherMafiaIdx) {
 				// 자신이 mafia2이면 능력을 이전 받음
 				if (personalRole == Mafia2) {
+					sprintf(mMsg, "Mafia1인 %d(이/가) 죽었습니다. 당신이 이제 mafia1 입니다", Idx);
+					setMessage(mMsg, "[system]");
 					personalRole = Mafia1;
 					mafiaCanUseAbility = TRUE;
 				}
 			}
-
 			if (Idx != -1) {
 				deathIdx[Idx] = TRUE;
-				strcpy(user, "[system]");
-				sprintf(mMsg, "Player %d(이/가) 죽었습니다.", Idx);
-				setMessage(mMsg, user);
-				if (Idx == personalIdx) { checkAlive = FALSE; }
+				if (Idx == personalIdx) {
+					checkAlive = FALSE;
+					strcpy(mMsg, "당신이 죽었습니다.");
+					setMessage(mMsg, "[system]");
+				}
+				else {
+					sprintf(mMsg, "Player %d(이/가) 죽었습니다.", Idx);
+					setMessage(mMsg, "[system]");
+				}
 			}
 			else {
-				strcpy(user, "[system]");
 				strcpy(mMsg, "아무도 죽지 않았습니다.");
-				setMessage(mMsg, user);
-				//printf("\n\n 아무도 죽지 않았습니다. \n\n"); 
+				setMessage(mMsg, "[system]");
 			}
+			strcpy(mMsg, "밤이 찾아왔습니다");
+			setMessage(mMsg, "[system]");
 			continue;
+			LeaveCriticalSection(&ChatCS2);
 			//E,F는 클라용
 		case 'E':
 			continue;
 		case 'F':
 			continue;
 		case 'G':
+			strcpy(mMsg, "게임이 종료 되었습니다.");
+			setMessage(mMsg, "[system]");
 			gameEnd = TRUE;
-			break;
+			continue;
 		case 'H':
 			Idx = recvMsg[2];
-			strcpy(user, "[system]");
+			if (personalIdx == -1)
+				personalIdx = Idx;
 			sprintf(mMsg, "Player %d(이/가) 접속했습니다.", Idx);
-			setMessage(mMsg, user);
+			setMessage(mMsg, "[system]");
 			break;
 		default:
 			continue;
@@ -324,7 +348,6 @@ void gotoxy(int x, int y) {
 	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), Cur);
 }
 void GameChatWindow() {
-	//int i;
 	gotoxy(1, 14);
 	printf("┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
 	printf("│%s : %s", UserBuf[5], GameEchoBuf[5]); gotoxy(109, 15); printf("│\n");
@@ -358,13 +381,13 @@ void setMessage(char *recvMsg,char* user)
 	strcpy(UserBuf[1], UserBuf[0]);
 	strcpy(UserBuf[0], user);
 
-	EnterCriticalSection(&ChatCS);
+	EnterCriticalSection(&ChatCS1);
 	GameChatClear();
-	LeaveCriticalSection(&ChatCS);
+	LeaveCriticalSection(&ChatCS1);
 
-	EnterCriticalSection(&ChatCS);
+	EnterCriticalSection(&ChatCS1);
 	GameChatWindow();
-	LeaveCriticalSection(&ChatCS);
+	LeaveCriticalSection(&ChatCS1);
 }
 
 void GameChatClear() {
