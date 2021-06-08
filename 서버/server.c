@@ -427,8 +427,8 @@ DWORD WINAPI threadMain(LPVOID pComPort) {
 				roomNum = ioInfo->buffer[2] - 1;
 				EnterCriticalSection(&cs[2]);
 				clntSocksOfRoom[roomNum][clntCntOfRoom[roomNum]++] = sock;
-				setConnectedMsg(message, clntCntOfRoom[roomNum]);
 				LeaveCriticalSection(&cs[2]);
+				setConnectedMsg(message, clntCntOfRoom[roomNum]);
 				sendMsgToAll(message, roomNum, strlen(message));
 				break;
 			}
