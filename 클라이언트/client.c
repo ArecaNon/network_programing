@@ -1,5 +1,4 @@
 #include "client.h"
-
 		  //todo : 동기화 , 마피아 정보 관련은 어떻게 할것인가? 서버에서 넘겨 줄것인가 아니면 클라에서 처리할것인가?(1. 다른 마피아 정보, 2. 마피아가 한명 즉었을때 능력 이전)
 		  //만든거 : 받는 트리거 구분, 보내는 트리거 구분 , 사망시 채팅불가, 마피아 챗, 회의,투표시간알림, 플레이어번호 표시
 		  /*A시작 트리거 - 시작 & 역할전송 | 3바이트
@@ -14,7 +13,7 @@ int main(int argc, char *argv[]) {
 	WSADATA wsaData;
 	SOCKET hSock;
 	SOCKADDR_IN servAdr;
-	HANDLE hSndThread, hRcvThread, playGameThread;
+	HANDLE hSndThread, hRcvThread, playGameThread, roomThread;
 	int i;
 
 	for (i = 0; i <= MAX_USER; i++) { deathIdx[i] = FALSE; }
@@ -33,6 +32,8 @@ int main(int argc, char *argv[]) {
 	gameEnd = FALSE; // 게임 종료 여부
 	checkAlive = TRUE; // 생존 여부
 	checkMorning = TRUE; // 아침 체크
+	roomSel = FALSE; // 방 선택 상태
+	roomNum = -1; // 선택한 방 번호
 
 	if (WSAStartup(MAKEWORD(2, 2), &wsaData) != 0) {
 		ErrorHandling("WSAStartup() error!");
@@ -56,10 +57,6 @@ int main(int argc, char *argv[]) {
 	hRcvThread =
 		(HANDLE)_beginthreadex(NULL, 0, RecvMsg, (void*)&hSock, 0, NULL);
 	playGameThread =(HANDLE)_beginthreadex(NULL, 0, GameManager, NULL , 0, NULL);
-
-	EnterCriticalSection(&ChatCS1);
-	GameChatClear();
-	LeaveCriticalSection(&ChatCS1);
 
 	WaitForSingleObject(hSndThread, INFINITE);
 	WaitForSingleObject(hRcvThread, INFINITE);
@@ -117,6 +114,66 @@ unsigned WINAPI SendMsg(void * arg) {   // send thread main
 	int idx;
 	while (1) {
 		fgets(msg, BUF_SIZE, stdin);
+		
+		if (!roomSel)
+		{
+			trigger = 'K';
+			if (msg[0] == '/') {
+				cmpMsg = msg;
+				cutMsg = strtok(cmpMsg, " ");
+				if (strcmp(cutMsg, "/입장")) {
+					strcpy(RoomMsg,"[system] : 틀린 명령어입니다.");
+					EnterCriticalSection(&ChatCS1);
+					GameChatClear();
+					RoomSelectWindow();
+					Sleep(1000);
+					strcpy(RoomMsg, "[system] : 방을 선택하십시오(ex)/입장 1)");
+					RoomSelectWindow();
+					LeaveCriticalSection(&ChatCS1);
+					Sleep(1000);
+					continue;
+				}
+				// 투표한 Idx확인
+				cutMsg = strtok(NULL, " ");
+				idx = atoi(cutMsg);
+				if (idx < 1 || idx > MAX_ROOM_SIZE) {
+					strcpy(RoomMsg, "[system] : 올바르지 않은 번호입니다.");
+					EnterCriticalSection(&ChatCS1);
+					GameChatClear();
+					RoomSelectWindow();
+					Sleep(1000);
+					strcpy(RoomMsg, "[system] : 방을 선택하십시오(ex)/입장 1)");
+					RoomSelectWindow();
+					LeaveCriticalSection(&ChatCS1);
+					Sleep(1000);
+					continue;
+				}
+				//strcmp(msg, cutMsg);
+				roomSel = TRUE;
+				roomNum = idx;
+				sprintf(Msg, "%c%c%c", trigger, 1, (char)roomNum); // 트리거 , 길이 , 투표대상자or마피아능력대상자 번호
+				strcpy(RoomMsg, "[system] : 명령어 사용 완료!");
+				EnterCriticalSection(&ChatCS1);
+				GameChatClear();
+				RoomSelectWindow();
+				Sleep(1000);
+				strcpy(RoomMsg, "[system] : 방을 선택하십시오(ex)/입장 1)");
+				RoomSelectWindow();
+				LeaveCriticalSection(&ChatCS1);
+				send(hSock, Msg, strlen(Msg), 0);
+				continue;
+			}
+			strcpy(RoomMsg, "[system] : 틀린 명령어입니다.");
+			EnterCriticalSection(&ChatCS1);
+			GameChatClear();
+			RoomSelectWindow();
+			Sleep(1000);
+			strcpy(RoomMsg, "[system] : 방을 선택하십시오(ex)/입장 1)");
+			RoomSelectWindow();
+			LeaveCriticalSection(&ChatCS1);
+			continue;
+		}
+
 		trigger = 'B';
 		// /투표, /마피아 같은 명령어 구분
 		if (!checkAlive) {
@@ -324,15 +381,46 @@ unsigned WINAPI RecvMsg(void * arg) {   // read thread main
 		case 'G':
 			strcpy(mMsg, "게임이 종료 되었습니다.");
 			setMessage(mMsg, "[system]");
+			if(recvMsg[2] == 0)
+				strcpy(mMsg, "시민이 이겼습니다.");
+			else
+				strcpy(mMsg, "마피아가 이겼습니다.");
+			setMessage(mMsg, "[system]");
 			gameEnd = TRUE;
 			continue;
 		case 'H':
 			Idx = recvMsg[2];
 			if (personalIdx == -1)
+			{
 				personalIdx = Idx;
+				sprintf(mMsg, "%d번방에 입장했습니다", roomNum);
+				setMessage(mMsg, "[system]");
+			}
 			sprintf(mMsg, "Player %d(이/가) 접속했습니다.", Idx);
 			setMessage(mMsg, "[system]");
-			break;
+			continue;
+		case 'I':
+			Idx = recvMsg[2];
+			sprintf(mMsg, "Player %d(이/가) 퇴장했습니다.", Idx);
+			setMessage(mMsg, "[system]");
+			if (Idx = personalIdx)
+			{
+				roomSel = FALSE;
+				roomNum = -1;
+				personalIdx = -1;
+				RoomSelectWindow();
+			}
+			continue;
+		case 'J':
+			strcpy(RoomMsg, "[system] : 방을 선택하십시오(ex)/입장 1)");
+			EnterCriticalSection(&ChatCS1);
+			RoomBuf[0] = (int)recvMsg[2];
+			RoomBuf[1] = (int)recvMsg[3];
+			RoomSelectWindow();
+			LeaveCriticalSection(&ChatCS1);
+			continue;
+		case 'K':
+			continue;
 		default:
 			continue;
 			
@@ -361,6 +449,21 @@ void GameChatWindow() {
 	printf("└───────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
 	gotoxy(9, 22);
 
+}
+
+void RoomSelectWindow() {
+	gotoxy(1, 14);
+	printf("┌───────────────────────────────────────────────────────────────────────────────────────────────────────────┐\n");
+	printf("│ %d번방 : %d명", 1, RoomBuf[0]); gotoxy(109, 15); printf("│\n");
+	printf("│ %d번방 : %d명", 2, RoomBuf[1]); gotoxy(109, 16); printf("│\n");
+	printf("│ %s", RoomMsg); gotoxy(109, 17); printf("│\n");
+	printf("│"); gotoxy(109, 18); printf("│\n");
+	printf("│"); gotoxy(109, 19); printf("│\n");
+	printf("│"); gotoxy(109, 20); printf("│\n");
+	printf("├───────────────────────────────────────────────────────────────────────────────────────────────────────────┤\n");
+	printf("│입력 :");  gotoxy(109, 22); printf("│\n");
+	printf("└───────────────────────────────────────────────────────────────────────────────────────────────────────────┘\n");
+	gotoxy(9, 22);
 }
 
 void setMessage(char *recvMsg,char* user) 
