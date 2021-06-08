@@ -46,11 +46,11 @@ void errorHandling(char* message);
 
 int clntCnt = 0;
 SOCKET clntSocks[MAX_CLNT]; 
-int clntCntOfRoom[2]; //추가
-SOCKET clntSocksOfRoom[2][MAX_PLAYER]; //추가
-int mafiaIndex[2][MAX_MAFIA]; //마피아 번호
-int mafiaCnt[2]; //마피아 수
-int citizenCnt[2]; //시민수
+int clntCntOfRoom[2];
+SOCKET clntSocksOfRoom[2][MAX_PLAYER];
+int mafiaIndex[2][MAX_MAFIA];
+int mafiaCnt[2];
+int citizenCnt[2];
 int gameStart[2];
 int vote[2][MAX_PLAYER];
 int voteCnt[2];
@@ -423,7 +423,7 @@ DWORD WINAPI threadMain(LPVOID pComPort) {
 				}
 				sendMsgToAll(ioInfo->wsaBuf.buf, roomNum, strlen(ioInfo->wsaBuf.buf));
 				break;
-			case 'J':
+			case 'K':
 				roomNum = ioInfo->buffer[2] - 1;
 				EnterCriticalSection(&cs[2]);
 				clntSocksOfRoom[roomNum][clntCntOfRoom[roomNum]++] = sock;
