@@ -84,7 +84,6 @@ DWORD WINAPI gameManageThread() {
 
 	while (1) {
 		if (!gameStart[0] && clntCntOfRoom[0] == MAX_PLAYER) { //1번방 게임시작전이고 인원수가 채워졌을 때
-
 			//게임시작전 초기화
 			gameStart[0] = TRUE; 
 			mafiaCnt[0] = MAX_MAFIA;
