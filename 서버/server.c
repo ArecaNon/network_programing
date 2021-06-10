@@ -21,8 +21,6 @@ int main() {
 	InitializeCriticalSection(&cs[1]);
 	InitializeCriticalSection(&cs[2]);
 
-	srand(time(NULL)); //seed값 설정
-
 	hComPort = CreateIoCompletionPort(INVALID_HANDLE_VALUE, NULL, 0, 0);
 	GetSystemInfo(&sysInfo);
 	//thread 실행
@@ -81,6 +79,8 @@ int main() {
 DWORD WINAPI gameManageThread() {
 	int i, mafia1, mafia2;
 	LPPER_IO_DATA ioInfo;
+
+	srand(time(NULL)); //seed값 설정
 
 	while (1) {
 		if (!gameStart[0] && clntCntOfRoom[0] == MAX_PLAYER) { //1번방 게임시작전이고 인원수가 채워졌을 때
@@ -214,6 +214,8 @@ DWORD WINAPI mainThread(LPVOID pComPort) {
 						while (i++ < clntCnt - 1) {
 							clntSocks[i] = clntSocks[i + 1];
 						}
+						LeaveCriticalSection(&cs[0]);
+						EnterCriticalSection(&cs[2]);
 						//클라이언트가 있던방에서 클라이언트 삭제
 						for (j = 0; j < MAX_PLAYER; j++) {
 							if (sock == clntSocksOfRoom[roomNum][j]) {
@@ -224,17 +226,19 @@ DWORD WINAPI mainThread(LPVOID pComPort) {
 								}
 							}
 						}
+						LeaveCriticalSection(&cs[2]);
 						//게임이 시작되고 클라이언트 수가 0이되면 게임종료로 설정
 						if (gameStart[roomNum] && !clntCntOfRoom[roomNum]) {
 							gameStart[roomNum] = FALSE;
 						}
-						LeaveCriticalSection(&cs[0]);
 						//연결해제 메세지 전송
 						sendMsgToAll(message, roomNum, strlen(message));
 						break;
 					}
 				}
+				EnterCriticalSection(&cs[0]);
 				clntCnt--;
+				LeaveCriticalSection(&cs[0]);
 
 				closesocket(sock);
 				free(handleInfo);
