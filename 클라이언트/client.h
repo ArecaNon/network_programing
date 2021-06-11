@@ -18,12 +18,12 @@
 enum Role { Null, Mafia1, Mafia2, Citizen };
 int RoomBuf[MAX_ROOM_SIZE];
 char RoomMsg[MSG_SIZE];
-char GameEchoBuf[6][MSG_SIZE+1];		//Ã¤ÆÃ ³»¿ªÀ» 6°³±îÁö ÀúÀå.
+char GameEchoBuf[6][MSG_SIZE+1];		//ì±„íŒ… ë‚´ì—­ì„ 6ê°œê¹Œì§€ ì €ì¥.
 char UserBuf[6][MSG_SIZE + 1];
-char msg[MSG_SIZE]; // Àü¼Û¹× ¹Ş´Â ¸Ş¼¼Áö
+char msg[MSG_SIZE]; // ì „ì†¡ë° ë°›ëŠ” ë©”ì„¸ì§€
 int currtime, confTime, voteTime, personalRole, personalIdx, anotherMafiaIdx, roomNum;// Int
 int mafia, mafiaCanUseAbility, checkMafiaAbilityUse, checkConfTime, checkVoteTime, checkAlive, checkMorning, gameStart, gameEnd, roomSel; // Bool
-int deathIdx[MAX_USER];
+int deathIdx[MAX_USER+1];
 CRITICAL_SECTION ChatCS1, ChatCS2;
 
 void ErrorHandling(char *msg);
